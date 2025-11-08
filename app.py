@@ -1,14 +1,11 @@
 from dotenv import load_dotenv
 load_dotenv()
-# ↓ すでに記述済みの2行
-# from dotenv import load_dotenv
-# load_dotenv()
 
 import streamlit as st
 import os
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.messages import SystemMessage, HumanMessage
+# from langchain_core.messages import SystemMessage, HumanMessage  ← 修正点1: この行を削除またはコメントアウト
 from langchain_core.output_parsers import StrOutputParser
 
 # --- 関数の定義 ---
@@ -32,13 +29,12 @@ def get_llm_response(user_input, expertise_choice):
     # 【条件】Lesson8を参考にLangChainのコードを記述
     
     # 1. LLMモデルの初期化
-    # (ローカル実行時は .env から、デプロイ時は Secrets から APIキーが読み込まれます)
     llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.7) 
 
-    # 2. プロンプトテンプレートの作成
+    # 2. プロンプトテンプレートの作成 (← 修正点2: タプル記法に変更)
     prompt = ChatPromptTemplate.from_messages([
-        SystemMessage(content=system_message_content),
-        HumanMessage(content="{user_question}")
+        ("system", system_message_content),
+        ("human", "{user_question}")
     ])
 
     # 3. 出力パーサー
@@ -59,7 +55,6 @@ def get_llm_response(user_input, expertise_choice):
 
 # --- Streamlit アプリのUI ---
 
-# 【条件】Webアプリの概要や操作方法をユーザーに明示するためのテキスト
 st.title("🧑‍🏫 専門家チャットボット")
 st.markdown("""
 このアプリは、あなたの質問や悩みに専門家が回答するチャットボットです。
@@ -69,28 +64,22 @@ st.info("**【操作方法】**\n1. 相談したい専門家を選んでくだ�
 
 # --- UIコンポーネント ---
 
-# 【条件】ラジオボタンでLLMに振る舞わせる専門家の種類を選択
 expertise = st.radio(
     "相談する専門家を選んでください:",
     ("健康アドバイザー", "キャリアコンサルタント"),
     key="expertise_choice"
 )
 
-# 【条件】画面に入力フォームを1つ用意
 user_query = st.text_area("質問を入力してください:", "", height=150)
 
-# 送信ボタン
 if st.button("送信"):
     if user_query:
-        # ユーザーの入力を表示
         st.info(f"**あなたの質問:**\n{user_query}")
         st.info(f"**選択した専門家:** {expertise}")
         
-        # 【条件】関数を利用してLLMからの回答を取得
         with st.spinner("AIが回答を生成中です..."):
             answer = get_llm_response(user_query, expertise)
             
-            # 【条件】回答結果が画面上に表示される
             if answer:
                 st.success(f"**{expertise}からの回答:**\n{answer}")
     else:
